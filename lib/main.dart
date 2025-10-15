@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:healthease/pages/home.dart';
+import 'package:healthease/pages/pills.dart';
 import 'theme.dart';
 
 void main() {
@@ -15,9 +16,10 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'HealthEase',
       theme: AppTheme.lightTheme,
-      initialRoute: '/',
+      initialRoute: '/home',
       routes: {
-        '/': (context) => const HomePage(),
+        '/home': (context) => const HomePage(),
+        '/pills': (context) => const PillsPage(),
       },
     );
   }

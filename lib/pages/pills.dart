@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:healthease/widgets/common/custom_app_bar.dart';
 import 'package:healthease/widgets/common/custom_bottom_nav.dart';
 
-class HomePage extends StatelessWidget {
-  const HomePage({super.key});
+class PillsPage extends StatelessWidget {
+  const PillsPage({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -15,7 +15,7 @@ class HomePage extends StatelessWidget {
       body: Center(
         child: ElevatedButton(
           onPressed: () {
-            Navigator.pushNamed(context, '/details');
+            Navigator.pushNamed(context, '/home');
           },
           child: const Text("Go to Details"),
         ),
@@ -24,7 +24,7 @@ class HomePage extends StatelessWidget {
         onPressed: () {},
         child: const Icon(Icons.add),
       ),
-      bottomNavigationBar: const CustomBottomNav(currentIndex: 0),
+      bottomNavigationBar: const CustomBottomNav(currentIndex: 2),
     );
   }
 }
