@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:healthease/pages/daily_intakes.dart';
 import 'package:healthease/pages/home.dart';
+import 'package:healthease/pages/pill_details.dart';
 import 'package:healthease/pages/pills.dart';
 import 'theme.dart';
 
@@ -20,6 +22,8 @@ class MyApp extends StatelessWidget {
       routes: {
         '/home': (context) => const HomePage(),
         '/pills': (context) => const PillsPage(),
+        '/in-takes': (context) => const DailyIntakePage(),
+        '/pill-details': (context) => const PillDetailsPage(),
       },
     );
   }
