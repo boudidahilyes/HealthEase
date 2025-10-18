@@ -1,0 +1,56 @@
+# Python bytecode files
+*.pyc
+*.pyo
+*.pyd
+__pycache__/
+
+# Virtual environments
+.env/
+.venv/
+env/
+venv/
+
+# IDE/editor settings
+.idea/
+.vscode/
+
+# FastAPI specific (if you're using Docker or related files)
+*.db
+*.sqlite3
+
+# FastAPI deployment files
+*.log
+*.pid
+
+# pytest cache
+.cache/
+
+# Local configuration files
+local_settings.py
+
+# .env or config files for secrets (if not using a config management tool)
+.env
+
+# mypy, pytype, and other type-checking tools
+.mypy_cache/
+.pytype/
+
+# Coverage reports
+.coverage
+.coverage.*
+*.coveragerc
+
+# Sphinx documentation
+_docs/_build/
+
+# Dist and build directories (for packaging)
+build/
+dist/
+*.egg-info/
+
+# macOS and Linux system files
+.DS_Store
+Thumbs.db
+
+# Other
+*.swp
