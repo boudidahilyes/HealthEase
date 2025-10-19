@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:healthease/pages/daily_intakes.dart';
+import 'package:healthease/pages/pills/daily_intakes.dart';
 import 'package:healthease/pages/home.dart';
-import 'package:healthease/pages/pill_details.dart';
-import 'package:healthease/pages/pills.dart';
+import 'package:healthease/pages/pills/pill_details.dart';
+import 'package:healthease/pages/pills/pills.dart';
 import 'theme.dart';
 
 void main() {

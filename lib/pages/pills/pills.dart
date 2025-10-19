@@ -1,7 +1,13 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:healthease/core/services/medicine_describer_service.dart';
+import 'package:healthease/pages/pills/medicine_description.dart';
 import 'package:healthease/theme.dart';
 import 'package:healthease/widgets/common/custom_app_bar.dart';
 import 'package:healthease/widgets/common/custom_bottom_nav.dart';
+import 'package:healthease/widgets/pills/custom_camera_screen.dart';
+import 'package:image_picker/image_picker.dart';
 
 class PillsPage extends StatefulWidget {
   const PillsPage({super.key});
@@ -37,6 +43,37 @@ class _PillsPageState extends State<PillsPage> {
       'remaining': 5,
     },
   ];
+
+  Future<void> _openCamera() async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => CustomCameraScreen(
+          onImageCaptured: (XFile imageFile) async {
+            try {
+              print("aaaaaaaa${imageFile.path}");
+              final description = await MedicineDescriberService().describeMedicine(File(imageFile.path));
+              Navigator.pop(context);
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => MedicineDescriptionPage(
+                    description: description,
+                  ),
+                ),
+              );
+            } catch (e) {
+              Navigator.pop(context);
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text("Error: $e")),
+              );
+            }
+          },
+        ),
+      ),
+    );
+  }
+
 
   void _removeMedication(int index) {
     setState(() {
@@ -165,6 +202,14 @@ class _PillsPageState extends State<PillsPage> {
             ),
             const SizedBox(height: 16),
           ],
+        ),
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          _openCamera();
+        },
+        child: Icon(
+          Icons.camera_alt_rounded,
         ),
       ),
       bottomNavigationBar: CustomBottomNav(currentIndex: 2),

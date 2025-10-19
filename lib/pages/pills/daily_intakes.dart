@@ -19,15 +19,18 @@ class _DailyIntakePageState extends State<DailyIntakePage> {
   void initState() {
     super.initState();
     today = DateTime.now();
-    weekDays = List.generate(7, (i) => today.subtract(Duration(days: 3 - i)));
+    final monday = today.subtract(Duration(days: today.weekday - 1));
+    weekDays = List.generate(7, (i) => monday.add(Duration(days: i)));
+    print(weekDays);
+    print(today);
     selectedIndex = today.weekday - 1;
+    print(selectedIndex);
   }
 
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
     final selectedDate = weekDays[selectedIndex];
-    final formattedDay = DateFormat('EEEE').format(selectedDate);
 
     return Scaffold(
       appBar: const CustomAppBar(true),
@@ -37,7 +40,7 @@ class _DailyIntakePageState extends State<DailyIntakePage> {
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             Text(
-              selectedIndex == 3
+              selectedIndex == today.weekday - 1
                   ? 'Today'
                   : DateFormat('EEEE').format(selectedDate),
               style: textTheme.headlineMedium?.copyWith(
@@ -58,6 +61,7 @@ class _DailyIntakePageState extends State<DailyIntakePage> {
                   return GestureDetector(
                     onTap: () {
                       setState(() => selectedIndex = index);
+                      print(selectedIndex);
                     },
                     child: Container(
                       width: 50,
@@ -147,7 +151,9 @@ class _DailyIntakePageState extends State<DailyIntakePage> {
                   ),
                   const SizedBox(height: 6),
                   Text(
-                    formattedDay,
+                    selectedIndex == today.weekday - 1
+                        ? 'Today'
+                        : DateFormat('EEEE').format(selectedDate),
                     style: textTheme.bodyMedium?.copyWith(
                       color: Colors.grey.shade600,
                     ),
