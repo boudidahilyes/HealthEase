@@ -1,16 +1,71 @@
 import 'package:flutter/material.dart';
+import 'package:healthease/core/dao/medicine_dao.dart';
+import 'package:healthease/core/dao/prescription_dao.dart';
+import 'package:healthease/core/dao/user_dao.dart';
+import 'package:healthease/core/database/local_database.dart';
+import 'package:healthease/core/models/medicine.dart';
+import 'package:healthease/core/models/user.dart';
 import 'package:healthease/theme.dart';
 import 'package:healthease/widgets/common/custom_app_bar.dart';
+import 'package:intl/intl.dart';
 
-class PillDetailsPage extends StatelessWidget {
-  const PillDetailsPage({super.key});
+class PillDetailsPage extends StatefulWidget {
+  final int medicineId;
+  const PillDetailsPage({super.key, required this.medicineId});
+
+  @override
+  State<StatefulWidget> createState() => _PillDetailsPageState();
+}
+
+class _PillDetailsPageState extends State<PillDetailsPage> {
+  int? medicineId;
+  Medicine? _medicine;
+  User? _doctor;
+  bool _isLoading = true;
+  final db = LocalDatabase.instance;
+
+  @override
+  void initState() {
+    super.initState();
+    medicineId = widget.medicineId;
+    _loadData(medicineId!);
+  }
+
+  Future<void> _loadData(int medicineId) async {
+    final database = await db;
+    final medicine = await MedicineDao(database).getMedicineById(medicineId);
+    if (medicine == null) {
+      return;
+    }
+
+    final doctorId = await PrescriptionDao(database)
+        .getDoctorIdByPrescriptionId(medicine.prescriptionId);
+    User? doctor = await UserDao(database).getUserById(doctorId);
+
+    setState(() {
+      _medicine = medicine;
+      _doctor = doctor;
+      _isLoading = false;
+    });
+  }
+
 
   @override
   Widget build(BuildContext context) {
     final theme = AppTheme.lightTheme;
     final textTheme = theme.textTheme;
     final colors = theme.colorScheme;
+    if (_isLoading) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
 
+    if (_medicine == null) {
+      return const Scaffold(
+        body: Center(child: Text("Medicine not found")),
+      );
+    }
     return Scaffold(
       appBar: const CustomAppBar(true),
       body: SingleChildScrollView(
@@ -27,7 +82,7 @@ class PillDetailsPage extends StatelessWidget {
                 borderRadius: BorderRadius.circular(16),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black12.withValues(alpha:0.05),
+                    color: Colors.black12.withValues(alpha: 0.05),
                     blurRadius: 6,
                     offset: const Offset(0, 2),
                   ),
@@ -37,7 +92,7 @@ class PillDetailsPage extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Paracetamol 500mg',
+                    '${_medicine!.name} ${_medicine!.mgPerDose}mg',
                     style: textTheme.headlineMedium?.copyWith(
                       color: AppTheme.textColor,
                       fontWeight: FontWeight.bold,
@@ -45,7 +100,7 @@ class PillDetailsPage extends StatelessWidget {
                   ),
                   const SizedBox(height: 6),
                   Text(
-                    'Prescribed by Dr. Sarah Ben Ali',
+                    'Prescribed by Dr. ${_doctor!.firstName} ${_doctor!.lastName}',
                     style: textTheme.bodyLarge?.copyWith(
                       color: Colors.grey[700],
                     ),
@@ -64,7 +119,7 @@ class PillDetailsPage extends StatelessWidget {
                 borderRadius: BorderRadius.circular(16),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black12.withValues(alpha:0.05),
+                    color: Colors.black12.withValues(alpha: 0.05),
                     blurRadius: 6,
                     offset: const Offset(0, 2),
                   ),
@@ -85,21 +140,22 @@ class PillDetailsPage extends StatelessWidget {
                     context,
                     icon: Icons.access_time,
                     label: 'Doses per day',
-                    value: '3',
+                    value: _medicine!.dosePerDay.toString(),
                   ),
                   const SizedBox(height: 12),
                   _buildDetailRow(
                     context,
                     icon: Icons.medication_outlined,
                     label: 'mg per dose',
-                    value: '500',
+                    value: _medicine!.mgPerDose.toString(),
                   ),
                   const SizedBox(height: 12),
                   _buildDetailRow(
                     context,
                     icon: Icons.calendar_today_outlined,
                     label: 'Duration',
-                    value: 'From Oct 15, 2024 to Oct 22, 2024',
+                    value:
+                        'From ${DateFormat('MMM dd, yyyy').format(_medicine!.startDate)} to ${DateFormat('MMM dd, yyyy').format(_medicine!.endDate)}',
                   ),
                 ],
               ),
@@ -115,7 +171,7 @@ class PillDetailsPage extends StatelessWidget {
                 borderRadius: BorderRadius.circular(16),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black12.withValues(alpha:0.05),
+                    color: Colors.black12.withValues(alpha: 0.05),
                     blurRadius: 6,
                     offset: const Offset(0, 2),
                   ),
@@ -139,9 +195,13 @@ class PillDetailsPage extends StatelessWidget {
                         children: [
                           Container(
                             padding: const EdgeInsets.symmetric(
-                                horizontal: 12, vertical: 6),
+                              horizontal: 12,
+                              vertical: 6,
+                            ),
                             decoration: BoxDecoration(
-                              color: AppTheme.primaryColor.withValues(alpha:0.1),
+                              color: AppTheme.primaryColor.withValues(
+                                alpha: 0.1,
+                              ),
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: Text(
@@ -176,7 +236,9 @@ class PillDetailsPage extends StatelessWidget {
                           foregroundColor: AppTheme.primaryColor,
                           side: const BorderSide(color: AppTheme.primaryColor),
                           padding: const EdgeInsets.symmetric(
-                              horizontal: 16, vertical: 8),
+                            horizontal: 16,
+                            vertical: 8,
+                          ),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
                           ),
@@ -218,10 +280,12 @@ class PillDetailsPage extends StatelessWidget {
     );
   }
 
-  Widget _buildDetailRow(BuildContext context,
-      {required IconData icon,
-        required String label,
-        required String value}) {
+  Widget _buildDetailRow(
+    BuildContext context, {
+    required IconData icon,
+    required String label,
+    required String value,
+  }) {
     final theme = Theme.of(context);
     final textTheme = theme.textTheme;
 
@@ -236,9 +300,7 @@ class PillDetailsPage extends StatelessWidget {
             children: [
               Text(
                 label,
-                style: textTheme.bodyLarge?.copyWith(
-                  color: Colors.grey[700],
-                ),
+                style: textTheme.bodyLarge?.copyWith(color: Colors.grey[700]),
               ),
               const SizedBox(height: 4),
               Text(

@@ -1,6 +1,9 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:healthease/core/dao/medicine_dao.dart';
+import 'package:healthease/core/database/local_database.dart';
+import 'package:healthease/core/models/medicine.dart';
 import 'package:healthease/core/services/medicine_describer_service.dart';
 import 'package:healthease/pages/pills/medicine_description.dart';
 import 'package:healthease/theme.dart';
@@ -17,32 +20,22 @@ class PillsPage extends StatefulWidget {
 }
 
 class _PillsPageState extends State<PillsPage> {
-  final List<Map<String, dynamic>> _medications = [
-    {
-      'name': 'Amoxicillin',
-      'dosage': '500mg',
-      'schedule': '3 times daily',
-      'remaining': 12,
-    },
-    {
-      'name': 'Ciprofloxacin',
-      'dosage': '250mg',
-      'schedule': '2 times daily',
-      'remaining': 8,
-    },
-    {
-      'name': 'Doxycycline',
-      'dosage': '100mg',
-      'schedule': 'Once daily',
-      'remaining': 5,
-    },
-    {
-      'name': 'Doxycycline',
-      'dosage': '100mg',
-      'schedule': 'Once daily',
-      'remaining': 5,
-    },
-  ];
+  final List<Medicine> _medications = [];
+  final db = LocalDatabase.instance;
+  @override
+  initState() {
+    init();
+    super.initState();
+  }
+
+  init() async {
+    final List<Medicine> medications = await MedicineDao(
+      await db,
+    ).getAllMedicinesForUser(1);
+    setState(() {
+      _medications.addAll(medications);
+    });
+  }
 
   Future<void> _openCamera() async {
     await Navigator.push(
@@ -51,29 +44,27 @@ class _PillsPageState extends State<PillsPage> {
         builder: (_) => CustomCameraScreen(
           onImageCaptured: (XFile imageFile) async {
             try {
-              print("aaaaaaaa${imageFile.path}");
-              final description = await MedicineDescriberService().describeMedicine(File(imageFile.path));
+              final description = await MedicineDescriberService()
+                  .describeMedicine(File(imageFile.path));
               Navigator.pop(context);
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (_) => MedicineDescriptionPage(
-                    description: description,
-                  ),
+                  builder: (_) =>
+                      MedicineDescriptionPage(description: description),
                 ),
               );
             } catch (e) {
               Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text("Error: $e")),
-              );
+              ScaffoldMessenger.of(
+                context,
+              ).showSnackBar(SnackBar(content: Text("Error: $e")));
             }
           },
         ),
       ),
     );
   }
-
 
   void _removeMedication(int index) {
     setState(() {
@@ -163,18 +154,8 @@ class _PillsPageState extends State<PillsPage> {
                           ),
                           const SizedBox(height: 16),
                           Text(
-                            'No medications',
+                            "You don't have any medications",
                             style: AppTheme.lightTheme.textTheme.headlineMedium
-                                ?.copyWith(
-                                  color: AppTheme.textColor.withValues(
-                                    alpha: 0.5,
-                                  ),
-                                ),
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            'Add medications to see them here',
-                            style: AppTheme.lightTheme.textTheme.bodyMedium
                                 ?.copyWith(
                                   color: AppTheme.textColor.withValues(
                                     alpha: 0.5,
@@ -191,10 +172,14 @@ class _PillsPageState extends State<PillsPage> {
                       itemBuilder: (context, index) {
                         final medication = _medications[index];
                         return _MedicationCard(
-                          name: medication['name'] as String,
-                          dosage: medication['dosage'] as String,
-                          schedule: medication['schedule'] as String,
-                          remaining: medication['remaining'] as int,
+                          medicineId: medication.id!,
+                          name: medication.name,
+                          dosage: medication.mgPerDose,
+                          schedule: medication.dosePerDay== 1 ?
+                            'Once per day':
+                          '${medication.dosePerDay} times per day'
+                        ,
+                          remaining: medication.remaining,
                           onRemove: () => _removeMedication(index),
                         );
                       },
@@ -208,9 +193,7 @@ class _PillsPageState extends State<PillsPage> {
         onPressed: () {
           _openCamera();
         },
-        child: Icon(
-          Icons.camera_alt_rounded,
-        ),
+        child: Icon(Icons.camera_alt_rounded),
       ),
       bottomNavigationBar: CustomBottomNav(currentIndex: 2),
     );
@@ -218,13 +201,15 @@ class _PillsPageState extends State<PillsPage> {
 }
 
 class _MedicationCard extends StatelessWidget {
+  final int medicineId;
   final String name;
-  final String dosage;
+  final int dosage;
   final String schedule;
   final int remaining;
   final VoidCallback onRemove;
 
   const _MedicationCard({
+    required this.medicineId,
     required this.name,
     required this.dosage,
     required this.schedule,
@@ -236,7 +221,9 @@ class _MedicationCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () {
-        Navigator.pushNamed(context, '/pill-details');
+        Navigator.pushNamed(context, '/pill-details',
+            arguments: medicineId
+        );
       },
       child: Card(
         elevation: 2,
@@ -270,7 +257,7 @@ class _MedicationCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      '$dosage • $schedule',
+                      '$dosage mg • $schedule',
                       style: AppTheme.lightTheme.textTheme.bodyMedium?.copyWith(
                         color: AppTheme.textColor.withValues(alpha: 0.7),
                       ),

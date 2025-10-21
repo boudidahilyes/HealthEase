@@ -26,7 +26,10 @@ class MyApp extends StatelessWidget {
         '/home': (context) => const HomePage(),
         '/pills': (context) => const PillsPage(),
         '/in-takes': (context) => const DailyIntakePage(),
-        '/pill-details': (context) => const PillDetailsPage(),
+        '/pill-details': (context) {
+          final medicineId = ModalRoute.of(context)!.settings.arguments as int;
+          return PillDetailsPage(medicineId: medicineId);
+        },
       },
     );
   }

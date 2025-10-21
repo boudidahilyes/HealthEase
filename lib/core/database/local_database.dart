@@ -3,7 +3,7 @@ import 'package:path/path.dart';
 
 class LocalDatabase {
   static const String _dbName = 'health_ease_db.db';
-  static const int _dbVersion = 1;
+  static const int _dbVersion = 2;
 
   static Database? _db;
 
@@ -96,6 +96,29 @@ class LocalDatabase {
         'email': 'doctor@doctor.com',
         'password': 'password',
         'role': 'DOCTOR',
+      });
+      await db.insert('prescription', {
+        'patient_id': 1,
+        'doctor_id': 2,
+        'prescription': 'Prescription 1',
+      });
+      await db.insert('medicine', {
+        'name': 'Medicine 1',
+        'start_date': '2025-10-22',
+        'end_date': '2025-11-22',
+        'dose_per_day': 2,
+        'mg_per_dose': 500,
+        'remaining': 2*30,
+        'prescription_id': 1,
+      });
+      await db.insert('medicine', {
+        'name': 'Medicine 2',
+        'start_date': '2025-10-22',
+        'end_date': '2025-11-22',
+        'dose_per_day': 3,
+        'mg_per_dose': 500,
+        'remaining': 3*30,
+        'prescription_id': 1,
       });
     }
   }
