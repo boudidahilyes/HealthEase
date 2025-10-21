@@ -42,6 +42,7 @@ class LocalDatabase {
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         role TEXT DEFAULT 'PATIENT'
         ) ''');
+
     await db.execute('''
         CREATE TABLE prescription (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -52,8 +53,9 @@ class LocalDatabase {
         FOREIGN KEY (patient_id) REFERENCES user(id),
         FOREIGN KEY (doctor_id) REFERENCES user(id)
         ) ''');
+
     await db.execute('''
-          CREATE TABLE medicine (
+        CREATE TABLE medicine (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
           name TEXT,
           start_date DATETIME,
@@ -62,9 +64,10 @@ class LocalDatabase {
           mg_per_dose INTEGER,
           remaining INTEGER,
           prescription_id INTEGER,
+          is_active BOOLEAN DEFAULT 1,
           FOREIGN KEY (prescription_id) REFERENCES prescription(id)
-          is_active BOOLEAN DEFAULT 1
-          ) ''');
+        ) ''');
+
     await db.execute('''
           CREATE TABLE reminder (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
