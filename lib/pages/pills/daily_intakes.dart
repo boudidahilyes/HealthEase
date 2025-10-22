@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:healthease/core/dao/medicine_dao.dart';
+import 'package:healthease/core/database/local_database.dart';
+import 'package:healthease/core/models/medicine.dart';
 import 'package:healthease/theme.dart';
 import 'package:healthease/widgets/common/custom_app_bar.dart';
 import 'package:intl/intl.dart';
@@ -11,13 +14,19 @@ class DailyIntakePage extends StatefulWidget {
 }
 
 class _DailyIntakePageState extends State<DailyIntakePage> {
+  final db = LocalDatabase.instance;
   late DateTime today;
   late List<DateTime> weekDays;
   int selectedIndex = 0;
-
+  late List<Medicine> medicines;
+  int inTakes = 0;
   @override
   void initState() {
+    init();
     super.initState();
+
+  }
+  init() async {
     today = DateTime.now();
     final monday = today.subtract(Duration(days: today.weekday - 1));
     weekDays = List.generate(7, (i) => monday.add(Duration(days: i)));
@@ -25,6 +34,13 @@ class _DailyIntakePageState extends State<DailyIntakePage> {
     print(today);
     selectedIndex = today.weekday - 1;
     print(selectedIndex);
+    final meds = await MedicineDao(await db).getActiveMedicinesForPatientOnDate(1, today);
+    setState(() {
+      medicines = meds;
+    });
+    for(var med in medicines){
+      inTakes+= med.dosePerDay;
+    }
   }
 
   @override
@@ -59,9 +75,17 @@ class _DailyIntakePageState extends State<DailyIntakePage> {
                   final label = DateFormat('E').format(date).toUpperCase();
                   final isSelected = index == selectedIndex;
                   return GestureDetector(
-                    onTap: () {
+                    onTap: () async {
+                      inTakes = 0;
                       setState(() => selectedIndex = index);
-                      print(selectedIndex);
+                      List<Medicine> meds=await MedicineDao(await db).getActiveMedicinesForPatientOnDate(1, date);
+                      setState(() {
+                        medicines = meds;
+                      });
+                      for(var med in medicines){
+                        inTakes+= med.dosePerDay;
+                      }
+                      print(inTakes);
                     },
                     child: Container(
                       width: 50,
@@ -140,7 +164,7 @@ class _DailyIntakePageState extends State<DailyIntakePage> {
                       ),
                       children: [
                         TextSpan(
-                          text: '/2',
+                          text: '/${inTakes}',
                           style: textTheme.headlineMedium?.copyWith(
                             color: AppTheme.primaryColor,
                             fontWeight: FontWeight.w600,
@@ -162,18 +186,15 @@ class _DailyIntakePageState extends State<DailyIntakePage> {
               ),
             ),
             const SizedBox(height: 28),
-            _buildIntakeCard(
-              context,
-              title: 'Vitamin D',
-              subtitle: '1 capsule, 1000mg',
-              time: '09:41',
-            ),
-            _buildIntakeCard(
-              context,
-              title: 'B12 Drops',
-              subtitle: '5 drops, 1200mg',
-              time: '06:13',
-            ),
+            for (var medicine in medicines)
+              for(int i=0;i<medicine.dosePerDay;i++)
+                _buildIntakeCard(
+                  context,
+                  title:medicine.name,
+                  subtitle: '${medicine.mgPerDose}mg',
+                  time: null,
+                ),
+            const SizedBox(height: 12),
           ],
         ),
       ),
@@ -184,7 +205,7 @@ class _DailyIntakePageState extends State<DailyIntakePage> {
     BuildContext context, {
     required String title,
     required String subtitle,
-    required String time,
+        String? time,
   }) {
     final textTheme = Theme.of(context).textTheme;
 
@@ -237,13 +258,14 @@ class _DailyIntakePageState extends State<DailyIntakePage> {
               color: AppTheme.primaryColor.withValues(alpha:0.1),
               borderRadius: BorderRadius.circular(8),
             ),
-            child: Text(
+
+            child: time!=null?Text(
               time,
               style: textTheme.bodyMedium?.copyWith(
                 color: AppTheme.primaryColor,
                 fontWeight: FontWeight.w600,
               ),
-            ),
+            ):Text(''),
           ),
         ],
       ),
