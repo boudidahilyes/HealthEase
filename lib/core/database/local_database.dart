@@ -5,8 +5,6 @@ class LocalDatabase {
   static const String _dbName = 'health_ease_db.db';
   static const int _dbVersion = 2;
 
-
-
   static Database? _db;
 
   static Future<Database> get instance async {
