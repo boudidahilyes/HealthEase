@@ -4,7 +4,7 @@ import 'package:http/http.dart' as http;
 
 class MedicineDescriberService {
   Future<String> describeMedicine(File imageFile) async {
-    final url = Uri.parse('http://192.168.100.225:8090/api/medicine_description');
+    final url = Uri.parse('http://10.83.70.178:8090/api/medicine_description');
     final request = http.MultipartRequest('POST', url);
     request.files.add(await http.MultipartFile.fromPath('file', imageFile.path));
 

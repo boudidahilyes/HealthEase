@@ -11,16 +11,13 @@ class CustomBottomNav extends StatelessWidget {
         Navigator.pushReplacementNamed(context, '/home');
         break;
       case 1:
-        Navigator.pushReplacementNamed(context, '/calendar');
+        Navigator.pushReplacementNamed(context, '/appointments');
         break;
       case 2:
         Navigator.pushReplacementNamed(context, '/pills');
         break;
       case 3:
         Navigator.pushReplacementNamed(context, '/profile');
-        break;
-      case 4:
-        Navigator.pushReplacementNamed(context, '/appointments');
         break;
     }
   }
@@ -56,7 +53,7 @@ class CustomBottomNav extends StatelessWidget {
               _buildNavItem(
                 context,
                 icon: Icons.calendar_today_rounded,
-                label: "Calendar",
+                label: "Appointments",
                 index: 1,
                 isActive: currentIndex == 1,
               ),
@@ -72,12 +69,6 @@ class CustomBottomNav extends StatelessWidget {
                 icon: Icons.person_rounded,
                 label: "Account",
                 index: 3,
-                isActive: currentIndex == 3,
-              ),_buildNavItem(
-                context,
-                icon: Icons.person_rounded,
-                label: "Appointments",
-                index: 4,
                 isActive: currentIndex == 3,
               ),
             ],

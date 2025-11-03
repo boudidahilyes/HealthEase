@@ -224,7 +224,7 @@ class _AppointmentListPageState extends State<AppointmentListPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: CustomAppBar(true),
-      bottomNavigationBar: CustomBottomNav(currentIndex: 4),
+      bottomNavigationBar: CustomBottomNav(currentIndex: 1),
       floatingActionButton: FloatingActionButton(
         onPressed: _navigateToAddAppointment,
         backgroundColor: AppTheme.primaryColor,
