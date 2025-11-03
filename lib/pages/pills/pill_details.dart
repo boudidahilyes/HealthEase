@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:healthease/core/dao/medicine_dao.dart';
 import 'package:healthease/core/dao/prescription_dao.dart';
+import 'package:healthease/core/dao/reminder_dao.dart';
 import 'package:healthease/core/dao/user_dao.dart';
 import 'package:healthease/core/database/local_database.dart';
 import 'package:healthease/core/models/medicine.dart';
+import 'package:healthease/core/models/reminder.dart';
 import 'package:healthease/core/models/user.dart';
 import 'package:healthease/theme.dart';
 import 'package:healthease/widgets/common/custom_app_bar.dart';
@@ -18,9 +20,11 @@ class PillDetailsPage extends StatefulWidget {
 }
 
 class _PillDetailsPageState extends State<PillDetailsPage> {
+  bool _isAlarmOn = true;
   int? medicineId;
   Medicine? _medicine;
   User? _doctor;
+  List<Reminder> _reminders = [];
   bool _isLoading = true;
   final db = LocalDatabase.instance;
 
@@ -38,17 +42,26 @@ class _PillDetailsPageState extends State<PillDetailsPage> {
       return;
     }
 
-    final doctorId = await PrescriptionDao(database)
-        .getDoctorIdByPrescriptionId(medicine.prescriptionId);
+    final doctorId = await PrescriptionDao(
+      database,
+    ).getDoctorIdByPrescriptionId(medicine.prescriptionId);
     User? doctor = await UserDao(database).getUserById(doctorId);
-
+    final reminders = await ReminderDao(
+      database,
+    ).getAllReminderOfMedicineForUser(1, medicine.id!);
+    for(var rem in reminders)
+      {
+        if(rem.isActive==false) {
+          _isAlarmOn=false;
+        }
+      }
     setState(() {
       _medicine = medicine;
       _doctor = doctor;
+      _reminders = reminders;
       _isLoading = false;
     });
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -56,15 +69,11 @@ class _PillDetailsPageState extends State<PillDetailsPage> {
     final textTheme = theme.textTheme;
     final colors = theme.colorScheme;
     if (_isLoading) {
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      );
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
     if (_medicine == null) {
-      return const Scaffold(
-        body: Center(child: Text("Medicine not found")),
-      );
+      return const Scaffold(body: Center(child: Text("Medicine not found")));
     }
     return Scaffold(
       appBar: const CustomAppBar(true),
@@ -188,71 +197,10 @@ class _PillDetailsPageState extends State<PillDetailsPage> {
                     ),
                   ),
                   const SizedBox(height: 16),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 6,
-                            ),
-                            decoration: BoxDecoration(
-                              color: AppTheme.primaryColor.withValues(
-                                alpha: 0.1,
-                              ),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Text(
-                              'everyday',
-                              style: textTheme.bodyLarge?.copyWith(
-                                color: AppTheme.primaryColor,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Text(
-                            '09:41',
-                            style: textTheme.bodyLarge?.copyWith(
-                              color: AppTheme.textColor,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                          const SizedBox(width: 6),
-                          Text(
-                            'Am',
-                            style: textTheme.bodyLarge?.copyWith(
-                              color: Colors.grey[700],
-                            ),
-                          ),
-                        ],
-                      ),
-                      ElevatedButton(
-                        onPressed: () {},
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.white,
-                          foregroundColor: AppTheme.primaryColor,
-                          side: const BorderSide(color: AppTheme.primaryColor),
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 8,
-                          ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                        child: Text(
-                          'Edit',
-                          style: textTheme.bodyLarge?.copyWith(
-                            color: AppTheme.primaryColor,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
+                  for (var reminder in _reminders) _buildReminderRow(context, reminder),
+                  if (_reminders.length < _medicine!.dosePerDay)
+                    for (var i = 0; i < _medicine!.dosePerDay - _reminders.length; i++)
+                      _buildReminderRow(context, null),
                   const SizedBox(height: 20),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -265,10 +213,17 @@ class _PillDetailsPageState extends State<PillDetailsPage> {
                         ),
                       ),
                       Switch(
-                        value: true,
-                        onChanged: (_) {},
+                        value: _isAlarmOn,
+                        onChanged: (value) async {
+                          setState(() => _isAlarmOn = value);
+                          if (_medicine != null && _reminders.isNotEmpty) {
+                            final database = await db;
+                            ReminderDao(database).setActiveStatusOfMedicine(_medicine!, value);
+                          }
+                        },
                         activeThumbColor: AppTheme.primaryColor,
                       ),
+
                     ],
                   ),
                 ],
@@ -315,5 +270,113 @@ class _PillDetailsPageState extends State<PillDetailsPage> {
         ),
       ],
     );
+  }
+  Widget _buildReminderRow(BuildContext context,Reminder? reminder){
+    final textTheme = Theme.of(context).textTheme;
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 12,
+                vertical: 6,
+              ),
+              decoration: BoxDecoration(
+                color: AppTheme.primaryColor.withValues(
+                  alpha: 0.1,
+                ),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Text(
+                'everyday',
+                style: textTheme.bodyLarge?.copyWith(
+                  color: AppTheme.primaryColor,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Text(reminder!=null ?
+              reminder.time : '',
+              style: textTheme.bodyLarge?.copyWith(
+                color: AppTheme.textColor,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
+        ElevatedButton(
+          onPressed: () async {
+            if(reminder==null) {
+              final picked=await _selectTime();
+              Reminder rem = Reminder(medicineId: _medicine!.id!, time: _formatTimeOfDay(picked!),isActive: _isAlarmOn);
+              final database = await db;
+              ReminderDao(database).addReminder(rem);
+              setState(() {
+                reminder=rem;
+                _reminders.add(rem);
+              });
+            } else {
+              List<String> parts = reminder!.time.split(':');
+              final picked=await _selectTime(hour: int.parse(parts[0]), minute:int.parse(parts[1]));
+              Reminder rem = Reminder(id:reminder!.id,medicineId: _medicine!.id!, time: _formatTimeOfDay(picked!),isActive: _isAlarmOn);
+              final database = await db;
+              ReminderDao(database).updateReminder(rem);
+              setState(() {
+                reminder=rem;
+              });
+              final index = _reminders.indexWhere((r) => r.id == rem.id);
+              if (index != -1) {
+                _reminders[index] = rem;
+                setState(() {});
+              }
+            }
+          },
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.white,
+            foregroundColor: AppTheme.primaryColor,
+            side: const BorderSide(color: AppTheme.primaryColor),
+            padding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 8,
+            ),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+          ),
+          child: Text(
+            'Edit',
+            style: textTheme.bodyLarge?.copyWith(
+              color: AppTheme.primaryColor,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+  Future<TimeOfDay?> _selectTime({int hour=9,int minute=0}) async {
+    final TimeOfDay? picked = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay(hour: hour, minute: minute),
+      builder: (context, child) => Theme(
+        data: Theme.of(context).copyWith(
+          colorScheme: ColorScheme.light(
+            primary: AppTheme.primaryColor,
+            onPrimary: Colors.white,
+            onSurface: AppTheme.textColor,
+          ),
+        ),
+        child: child!,
+      ),
+    );
+    return picked;
+  }
+  String _formatTimeOfDay(TimeOfDay time) {
+    final String hour = time.hour.toString().padLeft(2, '0');
+    final String minute = time.minute.toString().padLeft(2, '0');
+    return '$hour:$minute';
   }
 }

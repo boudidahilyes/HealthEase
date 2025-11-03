@@ -14,4 +14,14 @@ class PrescriptionDao {
     );
     return result[0]['doctor_id'];
   }
+
+  Future<int> getPatientIdByPrescriptionId(int prescriptionId) async {
+    final List<Map<String, dynamic>> result = await db.query(
+      'prescription',
+      where: 'id = ?',
+      whereArgs: [prescriptionId],
+      limit: 1,
+    );
+    return result[0]['patient_id'];
+  }
 }
