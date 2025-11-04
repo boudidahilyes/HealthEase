@@ -7,10 +7,9 @@ class ReminderDao {
   final Database db;
 
   ReminderDao(this.db);
-  Future<List<Reminder>> getAllReminderOfMedicineForUser(
-    int userId,
-    int medicineId,
-  ) async {
+
+  Future<List<Reminder>> getAllReminderOfMedicineForUser(int userId,
+      int medicineId,) async {
     final List<Map<String, dynamic>> result = await db.rawQuery(
       '''
         SELECT r.*
@@ -46,9 +45,16 @@ class ReminderDao {
       ).getPatientIdByPrescriptionId(medicine.prescriptionId),
       medicine.id!,
     );
-    for(var reminder in reminders)
-      {
-        db.rawUpdate('UPDATE reminder SET is_active=? WHERE medicine_id=?',[active,reminder.medicineId]);
-      }
+    for (var reminder in reminders) {
+      db.rawUpdate('UPDATE reminder SET is_active=? WHERE medicine_id=?',
+          [active, reminder.medicineId]);
+    }
+  }
+
+  Future<void> removeReminder(Reminder reminder) async {
+    await db.delete(
+        'reminder',
+        where: 'id = ?',
+        whereArgs: [reminder.id]);
   }
 }

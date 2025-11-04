@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:healthease/core/database/local_database.dart';
+import 'package:healthease/core/helpers/notification_helper.dart';
 import 'package:healthease/pages/appointments/appointment_list.dart';
 import 'package:healthease/pages/pills/daily_intakes.dart';
 import 'package:healthease/pages/home.dart';
@@ -10,6 +11,8 @@ import 'theme.dart';
 void main() async{
   WidgetsFlutterBinding.ensureInitialized();
   await LocalDatabase.instance;
+  await NotificationHelper.init();
+  await NotificationHelper.printAllScheduledNotifications();
   runApp(const MyApp());
 }
 
