@@ -3,7 +3,7 @@ import 'package:path/path.dart';
 
 class LocalDatabase {
   static const String _dbName = 'health_ease_db.db';
-  static const int _dbVersion = 2;
+  static const int _dbVersion = 4;
 
   static Database? _db;
 
@@ -92,6 +92,15 @@ class LocalDatabase {
           FOREIGN KEY (doctor_id) REFERENCES user(id),
           FOREIGN KEY (patient_id) REFERENCES user(id)
           )''');
+
+    await db.execute('''
+          CREATE TABLE medicine_intake (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          medicine_id INTEGER NOT NULL,
+          date TIMESTAMP NOT NULL,
+          dose_index INTEGER NOT NULL,
+          FOREIGN KEY (medicine_id) REFERENCES medicine(id)
+          ) ''');
   }
 
   static Future<void> _onUpgrade(
@@ -152,11 +161,21 @@ class LocalDatabase {
             '''     
       INSERT INTO appointments (doctor_id, patient_id, speciality, appointment_date, appointment_time, status) 
       VALUES (2, 1, 'Pediatrics', '2024-02-19', '15:20', 'PENDING')
-   '''
+      '''
       ];
       for (var element in appointmentInserts) {
         db.execute(element);
       }
+    }
+    if (oldVersion<4){
+      await db.execute('''
+          CREATE TABLE medicine_intake (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          medicine_id INTEGER NOT NULL,
+          date TIMESTAMP NOT NULL,
+          dose_index INTEGER NOT NULL,
+          FOREIGN KEY (medicine_id) REFERENCES medicine(id)
+          ) ''');
     }
   }
 

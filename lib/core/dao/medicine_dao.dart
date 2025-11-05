@@ -56,4 +56,15 @@ class MedicineDao {
       rethrow;
     }
   }
+
+  Future<void> decrementRemainingQuantity(int medicineId) async {
+      await db.rawUpdate(
+        '''
+      UPDATE medicine
+      SET remaining = remaining - 1
+      WHERE id = ? AND remaining > 0
+      ''',
+        [medicineId],
+      );
+  }
 }
