@@ -5,11 +5,11 @@ import 'package:healthease/core/dao/medicine_dao.dart';
 import 'package:healthease/core/database/local_database.dart';
 import 'package:healthease/core/models/medicine.dart';
 import 'package:healthease/core/services/medicine_describer_service.dart';
-import 'package:healthease/pages/pills/medicine_description.dart';
+import 'package:healthease/mobile/pages/pills/medicine_description.dart';
+import 'package:healthease/mobile/widgets/common/custom_app_bar.dart';
+import 'package:healthease/mobile/widgets/common/custom_bottom_nav.dart';
+import 'package:healthease/mobile/widgets/pills/custom_camera_screen.dart';
 import 'package:healthease/theme.dart';
-import 'package:healthease/widgets/common/custom_app_bar.dart';
-import 'package:healthease/widgets/common/custom_bottom_nav.dart';
-import 'package:healthease/widgets/pills/custom_camera_screen.dart';
 import 'package:image_picker/image_picker.dart';
 
 class PillsPage extends StatefulWidget {

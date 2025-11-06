@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:healthease/core/database/local_database.dart';
 import 'package:healthease/core/helpers/notification_helper.dart';
-import 'package:healthease/pages/appointments/appointment_list.dart';
-import 'package:healthease/pages/pills/daily_intakes.dart';
-import 'package:healthease/pages/home.dart';
-import 'package:healthease/pages/pills/pill_details.dart';
-import 'package:healthease/pages/pills/pills.dart';
+import 'package:healthease/mobile/pages/appointments/appointment_list.dart';
+import 'package:healthease/mobile/pages/home.dart';
+import 'package:healthease/mobile/pages/pills/daily_intakes.dart';
+import 'package:healthease/mobile/pages/pills/pill_details.dart';
+import 'package:healthease/mobile/pages/pills/pills.dart';
 import 'theme.dart';
 
 void main() async{

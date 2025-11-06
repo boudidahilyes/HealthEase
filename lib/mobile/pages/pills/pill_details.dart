@@ -8,8 +8,8 @@ import 'package:healthease/core/helpers/notification_helper.dart';
 import 'package:healthease/core/models/medicine.dart';
 import 'package:healthease/core/models/reminder.dart';
 import 'package:healthease/core/models/user.dart';
+import 'package:healthease/mobile/widgets/common/custom_app_bar.dart';
 import 'package:healthease/theme.dart';
-import 'package:healthease/widgets/common/custom_app_bar.dart';
 import 'package:intl/intl.dart';
 
 class PillDetailsPage extends StatefulWidget {

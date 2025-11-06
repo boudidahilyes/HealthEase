@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:healthease/widgets/common/custom_app_bar.dart';
-import 'package:healthease/widgets/common/custom_bottom_nav.dart';
+import 'package:healthease/mobile/widgets/common/custom_app_bar.dart';
+import 'package:healthease/mobile/widgets/common/custom_bottom_nav.dart';
 
 class HomePage extends StatelessWidget {
   const HomePage({super.key});

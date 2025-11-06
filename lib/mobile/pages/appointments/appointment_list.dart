@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:healthease/core/dao/appointments_dao.dart';
 import 'package:healthease/core/database/local_database.dart';
-import '../../core/dao/appointments_dao.dart';
-import '../../theme.dart';
-import '../../core/models/appointment.dart';
+import 'package:healthease/core/models/appointment.dart';
+import 'package:healthease/theme.dart';
 import '../../widgets/common/custom_app_bar.dart';
 import '../../widgets/common/custom_bottom_nav.dart';
 import 'add_appointment.dart';

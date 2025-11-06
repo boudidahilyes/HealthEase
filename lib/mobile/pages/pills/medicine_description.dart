@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:healthease/widgets/common/custom_app_bar.dart';
+import 'package:healthease/mobile/widgets/common/custom_app_bar.dart';
 
 class MedicineDescriptionPage extends StatefulWidget {
   final String description;

@@ -6,9 +6,9 @@ import 'package:healthease/core/database/local_database.dart';
 import 'package:healthease/core/models/medicine.dart';
 import 'package:healthease/core/models/medicine_intake.dart';
 import 'package:healthease/core/models/reminder.dart';
+import 'package:healthease/mobile/widgets/common/custom_app_bar.dart';
+import 'package:healthease/mobile/widgets/common/custom_popup_dialog.dart';
 import 'package:healthease/theme.dart';
-import 'package:healthease/widgets/common/custom_app_bar.dart';
-import 'package:healthease/widgets/common/custom_popup_dialog.dart';
 import 'package:intl/intl.dart';
 
 class DailyIntakePage extends StatefulWidget {
