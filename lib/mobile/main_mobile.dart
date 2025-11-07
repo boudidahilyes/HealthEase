@@ -6,18 +6,18 @@ import 'package:healthease/mobile/pages/home.dart';
 import 'package:healthease/mobile/pages/pills/daily_intakes.dart';
 import 'package:healthease/mobile/pages/pills/pill_details.dart';
 import 'package:healthease/mobile/pages/pills/pills.dart';
-import 'theme.dart';
+import '../theme.dart';
 
-void main() async{
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await LocalDatabase.instance;
   await NotificationHelper.init();
   await NotificationHelper.printAllScheduledNotifications();
-  runApp(const MyApp());
+  runApp(const MobileApp());
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+class MobileApp extends StatelessWidget {
+  const MobileApp({super.key});
 
   @override
   Widget build(BuildContext context) {

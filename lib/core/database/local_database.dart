@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
 
@@ -48,7 +49,7 @@ class LocalDatabase {
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         patient_id INTEGER,
         doctor_id INTEGER,
-        prescription TEXT,
+        description TEXT,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (patient_id) REFERENCES user(id),
         FOREIGN KEY (doctor_id) REFERENCES user(id)
@@ -125,7 +126,7 @@ class LocalDatabase {
       await db.insert('prescription', {
         'patient_id': 1,
         'doctor_id': 2,
-        'prescription': 'Prescription 1',
+        'description': 'description 1',
       });
       await db.insert('medicine', {
         'name': 'Medicine 1',
