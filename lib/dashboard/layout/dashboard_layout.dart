@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:healthease/dashboard/pages/prescription/prescription_list.dart';
 import 'package:healthease/dashboard/widgets/common/sidebar.dart';
 
 class DashboardPage extends StatefulWidget {
@@ -43,7 +44,7 @@ class _DashboardPageState extends State<DashboardPage> {
       case 1:
         return const Text("Appointments", style: TextStyle(fontSize: 22));
       case 2:
-        return const Text("Prescriptions", style: TextStyle(fontSize: 22));
+        return PrescriptionListPage();
       case 3:
         return const Text("Patients", style: TextStyle(fontSize: 22));
       default:

@@ -44,7 +44,6 @@ class _SidebarState extends State<Sidebar> {
 
           const SizedBox(height: 32),
 
-          // Menu items
           _buildMenuItem(
             index: 0,
             icon: Icons.home_outlined,
@@ -93,7 +92,7 @@ class _SidebarState extends State<Sidebar> {
         margin: const EdgeInsets.symmetric(vertical: 6),
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
         decoration: BoxDecoration(
-          color: isSelected ? AppTheme.primaryColor.withOpacity(0.1) : Colors.transparent,
+          color: isSelected ? AppTheme.primaryColor.withValues(alpha: 0.1) : Colors.transparent,
           border: isSelected
               ? Border(
             left: BorderSide(
@@ -108,13 +107,13 @@ class _SidebarState extends State<Sidebar> {
             Icon(
               icon,
               size: 22,
-              color: isSelected ? AppTheme.primaryColor : AppTheme.textColor.withOpacity(0.7),
+              color: isSelected ? AppTheme.primaryColor : AppTheme.textColor.withValues(alpha: 0.7),
             ),
             const SizedBox(width: 16),
             Text(
               title,
               style: TextStyle(
-                color: isSelected ? AppTheme.primaryColor : AppTheme.textColor.withOpacity(0.8),
+                color: isSelected ? AppTheme.primaryColor : AppTheme.textColor.withValues(alpha: 0.8),
                 fontSize: 15,
                 fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
               ),

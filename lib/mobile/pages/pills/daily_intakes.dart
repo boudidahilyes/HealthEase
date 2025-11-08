@@ -200,7 +200,7 @@ class _DailyIntakePageState extends State<DailyIntakePage> {
                         ),
                         children: [
                           TextSpan(
-                            text: '/${inTakes}',
+                            text: '/$inTakes',
                             style: textTheme.headlineMedium?.copyWith(
                               color: AppTheme.primaryColor,
                               fontWeight: FontWeight.w600,
