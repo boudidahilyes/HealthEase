@@ -1,9 +1,22 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
+import 'package:healthease/core/dao/medicine_dao.dart';
+import 'package:healthease/core/dao/prescription_dao.dart';
 import 'package:healthease/core/dto/prescription_dto.dart';
+import 'package:healthease/core/mappers/prescription_mapper.dart';
 import 'package:http/http.dart' as http;
 
 class PrescriptionService {
-  static const String _baseUrl = 'http://localhost:5141/api/Prescription';
+  late final String _baseUrl;
+
+  PrescriptionService() {
+    if (kIsWeb) {
+      _baseUrl = 'http://localhost:5141/api/Prescription';
+    }
+    else {
+      _baseUrl = 'http://192.168.100.225:5141/api/Prescription';
+    }
+  }
 
   Future<PrescriptionDto> createPrescription(PrescriptionDto prescription) async {
     final response = await http.post(
@@ -64,5 +77,4 @@ class PrescriptionService {
       throw Exception('Failed to delete prescription: ${response.statusCode}');
     }
   }
-
 }

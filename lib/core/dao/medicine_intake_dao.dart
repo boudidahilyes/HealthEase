@@ -28,4 +28,8 @@ class MedicineIntakeDao {
 
     return result.isNotEmpty;
   }
+
+  Future<void> removeMedicineInTakeByMedicineId(int medicineId) async {
+    await db.delete('medicine_intake', where: 'medicine_id = ?', whereArgs: [medicineId]);
+  }
 }

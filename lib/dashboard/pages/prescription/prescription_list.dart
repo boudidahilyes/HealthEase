@@ -55,6 +55,7 @@ class _PrescriptionListPageState extends State<PrescriptionListPage> {
   }
 
   void _showAddPrescriptionDialog(BuildContext context) {
+    _clearForm();
     showDialog(
       context: context,
       builder: (context) {

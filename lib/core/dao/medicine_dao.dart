@@ -32,6 +32,17 @@ class MedicineDao {
     return Medicine.fromMap(result.first);
   }
 
+  Future<List<Medicine>?> getMedicineByPrescriptionId(int prescriptionId) async {
+    final List<Map<String, dynamic>> result = await db.query(
+      'medicine',
+      where: 'prescription_id = ?',
+      whereArgs: [prescriptionId],
+      limit: 1,
+    );
+    if (result.isEmpty) return null;
+    return result.map((row) => Medicine.fromMap(row)).toList();
+  }
+
   Future<List<Medicine>> getActiveMedicinesForPatientOnDate(
     int patientId,
     DateTime targetDate,
@@ -58,13 +69,36 @@ class MedicineDao {
   }
 
   Future<void> decrementRemainingQuantity(int medicineId) async {
-      await db.rawUpdate(
-        '''
+    await db.rawUpdate(
+      '''
       UPDATE medicine
       SET remaining = remaining - 1
       WHERE id = ? AND remaining > 0
       ''',
-        [medicineId],
+      [medicineId],
+    );
+  }
+
+  Future<int> insertOrUpdate(Medicine med) async {
+    if (med.id == null) {
+      final id = await db.insert('medicine', med.toMap());
+      return id;
+    } else {
+      final count = await db.update(
+        'medicine',
+        med.toMap(),
+        where: 'id = ?',
+        whereArgs: [med.id],
       );
+      if (count == 0) {
+        final id = await db.insert('medicine', med.toMap());
+        return id;
+      }
+      return med.id!;
+    }
+  }
+
+  Future<void> removeById(int medicineId) async {
+    await db.delete('medicine', where: 'id = ?', whereArgs: [medicineId]);
   }
 }

@@ -42,6 +42,7 @@ class PrescriptionDto {
   String toString() {
     return '{"id": $id, "patientId": $patientId, "doctorId": $doctorId, "createdAt": "$createdAt", "description": $description, "medicines": $medicines}';
   }
+
 }
 
 class Medicine {

@@ -57,4 +57,7 @@ class ReminderDao {
         where: 'id = ?',
         whereArgs: [reminder.id]);
   }
+  Future<void> removeReminderByMedicineId(int medicineId) async {
+    await db.delete('reminder', where: 'medicine_id = ?', whereArgs: [medicineId]);
+  }
 }

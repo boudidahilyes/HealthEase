@@ -3,7 +3,7 @@ import 'package:path/path.dart';
 
 class LocalDatabase {
   static const String _dbName = 'health_ease_db.db';
-  static const int _dbVersion = 4;
+  static const int _dbVersion = 2;
 
   static Database? _db;
 
@@ -122,29 +122,6 @@ class LocalDatabase {
         'password': 'password',
         'role': 'DOCTOR',
       });
-      await db.insert('prescription', {
-        'patient_id': 1,
-        'doctor_id': 2,
-        'description': 'description 1',
-      });
-      await db.insert('medicine', {
-        'name': 'Medicine 1',
-        'start_date': '2025-10-22',
-        'end_date': '2025-11-22',
-        'dose_per_day': 2,
-        'mg_per_dose': 500,
-        'remaining': 2*30,
-        'prescription_id': 1,
-      });
-      await db.insert('medicine', {
-        'name': 'Medicine 2',
-        'start_date': '2025-10-22',
-        'end_date': '2025-11-22',
-        'dose_per_day': 3,
-        'mg_per_dose': 500,
-        'remaining': 3*30,
-        'prescription_id': 1,
-      });
       final List<String> appointmentInserts = [
         '''
       INSERT INTO appointments (doctor_id, patient_id, speciality, appointment_date, appointment_time, status) 
@@ -166,16 +143,6 @@ class LocalDatabase {
       for (var element in appointmentInserts) {
         db.execute(element);
       }
-    }
-    if (oldVersion<4){
-      await db.execute('''
-          CREATE TABLE medicine_intake (
-          id INTEGER PRIMARY KEY AUTOINCREMENT,
-          medicine_id INTEGER NOT NULL,
-          date TIMESTAMP NOT NULL,
-          dose_index INTEGER NOT NULL,
-          FOREIGN KEY (medicine_id) REFERENCES medicine(id)
-          ) ''');
     }
   }
 

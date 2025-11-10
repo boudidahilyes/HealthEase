@@ -2,15 +2,21 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:healthease/core/dao/medicine_dao.dart';
+import 'package:healthease/core/dao/medicine_intake_dao.dart';
+import 'package:healthease/core/dao/prescription_dao.dart';
+import 'package:healthease/core/dao/reminder_dao.dart';
 import 'package:healthease/core/database/local_database.dart';
+import 'package:healthease/core/helpers/notification_helper.dart';
 import 'package:healthease/core/models/medicine.dart';
 import 'package:healthease/core/services/medicine_describer_service.dart';
+import 'package:healthease/core/services/prescription_service.dart';
 import 'package:healthease/mobile/pages/pills/medicine_description.dart';
 import 'package:healthease/mobile/widgets/common/custom_app_bar.dart';
 import 'package:healthease/mobile/widgets/common/custom_bottom_nav.dart';
 import 'package:healthease/mobile/widgets/pills/custom_camera_screen.dart';
 import 'package:healthease/theme.dart';
 import 'package:image_picker/image_picker.dart';
+import '../../../core/mappers/prescription_mapper.dart';
 
 class PillsPage extends StatefulWidget {
   const PillsPage({super.key});
@@ -22,13 +28,16 @@ class PillsPage extends StatefulWidget {
 class _PillsPageState extends State<PillsPage> {
   final List<Medicine> _medications = [];
   final db = LocalDatabase.instance;
+
   @override
-  initState() {
-    init();
+  void initState() {
     super.initState();
+    init();
   }
 
   init() async {
+    print("aaaaa");
+    await syncFromServer(1);
     final List<Medicine> medications = await MedicineDao(
       await db,
     ).getAllMedicinesForUser(1);
@@ -66,24 +75,52 @@ class _PillsPageState extends State<PillsPage> {
     );
   }
 
-  void _removeMedication(int index) {
-    setState(() {
-      _medications.removeAt(index);
-    });
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          'Medication removed',
-          style: AppTheme.lightTheme.textTheme.bodyMedium?.copyWith(
-            color: Colors.white,
-          ),
-        ),
-        backgroundColor: AppTheme.successColor,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      ),
-    );
+  Future<void> syncFromServer(int patientId) async {
+    final api = PrescriptionService();
+    final database = await db;
+
+    final dtos = await api.getPrescriptionsByPatient(patientId);
+    final serverIds = dtos.map((d) => d.id!).toList();
+
+    final localPrescriptions = await PrescriptionDao(database).getAllByPatientId(patientId);
+
+    for (final local in localPrescriptions) {
+      if (!serverIds.contains(local.id)) {
+        final medicines = await MedicineDao(database).getMedicineByPrescriptionId(local.id!);
+        if (medicines != null) {
+          for (final med in medicines) {
+            final reminders = await ReminderDao(database).getAllReminderOfMedicineForUser(patientId, med.id!);
+            if (reminders != null) {
+              for (final reminder in reminders) {
+                await NotificationHelper.cancelNotification(reminder.id!);
+              }
+            }
+            await ReminderDao(database).removeReminderByMedicineId(med.id!);
+            await MedicineIntakeDao(database).removeMedicineInTakeByMedicineId(med.id!);
+            await MedicineDao(database).removeById(med.id!);
+          }
+        }
+        await PrescriptionDao(database).removeById(local.id!);
+      }
+    }
+
+    for (final d in dtos) {
+      final localPres = prescriptionDtoToLocal(d);
+      final int localPresId = await PrescriptionDao(database).insertOrUpdate(localPres);
+
+      for (final medDto in d.medicines) {
+        final localMed = medicineDtoToLocal(
+          medDto,
+          prescriptionId: localPresId,
+        );
+        await MedicineDao(database).insertOrUpdate(localMed);
+      }
+    }
+
   }
+
+
+
 
   @override
   Widget build(BuildContext context) {
@@ -175,12 +212,10 @@ class _PillsPageState extends State<PillsPage> {
                           medicineId: medication.id!,
                           name: medication.name,
                           dosage: medication.mgPerDose,
-                          schedule: medication.dosePerDay== 1 ?
-                            'Once per day':
-                          '${medication.dosePerDay} times per day'
-                        ,
+                          schedule: medication.dosePerDay == 1
+                              ? 'Once per day'
+                              : '${medication.dosePerDay} times per day',
                           remaining: medication.remaining,
-                          onRemove: () => _removeMedication(index),
                         );
                       },
                     ),
@@ -206,7 +241,6 @@ class _MedicationCard extends StatelessWidget {
   final int dosage;
   final String schedule;
   final int remaining;
-  final VoidCallback onRemove;
 
   const _MedicationCard({
     required this.medicineId,
@@ -214,16 +248,13 @@ class _MedicationCard extends StatelessWidget {
     required this.dosage,
     required this.schedule,
     required this.remaining,
-    required this.onRemove,
   });
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () {
-        Navigator.pushNamed(context, '/pill-details',
-            arguments: medicineId
-        );
+        Navigator.pushNamed(context, '/pill-details', arguments: medicineId);
       },
       child: Card(
         elevation: 2,
@@ -271,14 +302,6 @@ class _MedicationCard extends StatelessWidget {
                       ),
                     ),
                   ],
-                ),
-              ),
-              IconButton(
-                onPressed: onRemove,
-                icon: Icon(
-                  Icons.delete_outline,
-                  color: AppTheme.errorColor,
-                  size: 24,
                 ),
               ),
             ],

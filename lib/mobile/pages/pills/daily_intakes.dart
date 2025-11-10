@@ -6,6 +6,7 @@ import 'package:healthease/core/database/local_database.dart';
 import 'package:healthease/core/models/medicine.dart';
 import 'package:healthease/core/models/medicine_intake.dart';
 import 'package:healthease/core/models/reminder.dart';
+import 'package:healthease/core/services/medicine_service.dart';
 import 'package:healthease/mobile/widgets/common/custom_app_bar.dart';
 import 'package:healthease/mobile/widgets/common/custom_popup_dialog.dart';
 import 'package:healthease/theme.dart';
@@ -246,6 +247,7 @@ class _DailyIntakePageState extends State<DailyIntakePage> {
                             );
                             await MedicineIntakeDao(await db).insert(intake);
                             MedicineDao(await db).decrementRemainingQuantity(medicine.id!);
+                            MedicineService().decrementRemaining(medicine.id!);
                             setState(() {
                               inTakesToken += 1;
                             });

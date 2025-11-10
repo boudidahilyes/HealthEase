@@ -12,13 +12,17 @@ class NotificationHelper {
     tzdata.initializeTimeZones();
     tz.setLocalLocation(tz.getLocation('Africa/Tunis'));
 
-    const androidSettings = AndroidInitializationSettings('@mipmap/ic_launcher');
+    const androidSettings = AndroidInitializationSettings(
+      '@mipmap/ic_launcher',
+    );
     const iosSettings = DarwinInitializationSettings();
-    const initSettings = InitializationSettings(android: androidSettings, iOS: iosSettings);
+    const initSettings = InitializationSettings(
+      android: androidSettings,
+      iOS: iosSettings,
+    );
 
     await _plugin.initialize(initSettings);
 
-    // Request permission on Android 13+
     final status = await Permission.notification.status;
     if (!status.isGranted) {
       await Permission.notification.request();
@@ -38,18 +42,36 @@ class NotificationHelper {
 
     if (now.isAfter(endDate)) return;
 
-    DateTime firstTriggerDate = DateTime(now.year, now.month, now.day, hour, minute);
+    DateTime firstTriggerDate = DateTime(
+      now.year,
+      now.month,
+      now.day,
+      hour,
+      minute,
+    );
 
     if (firstTriggerDate.isBefore(now)) {
       firstTriggerDate = firstTriggerDate.add(const Duration(days: 1));
     }
 
     if (firstTriggerDate.isBefore(startDate)) {
-      firstTriggerDate = DateTime(startDate.year, startDate.month, startDate.day, hour, minute,0);
+      firstTriggerDate = DateTime(
+        startDate.year,
+        startDate.month,
+        startDate.day,
+        hour,
+        minute,
+        0,
+      );
     }
 
-    final tz.TZDateTime tzFirstTrigger = tz.TZDateTime.from(firstTriggerDate, tz.local);
-    print("⏰ Scheduling notification at: $tzFirstTrigger (${tzFirstTrigger.timeZoneName})");
+    final tz.TZDateTime tzFirstTrigger = tz.TZDateTime.from(
+      firstTriggerDate,
+      tz.local,
+    );
+    print(
+      "⏰ Scheduling notification at: $tzFirstTrigger (${tzFirstTrigger.timeZoneName})",
+    );
 
     await _plugin.zonedSchedule(
       id,
@@ -83,8 +105,8 @@ class NotificationHelper {
   }
 
   static Future<void> printAllScheduledNotifications() async {
-    final List<PendingNotificationRequest> pendingNotifications =
-    await _plugin.pendingNotificationRequests();
+    final List<PendingNotificationRequest> pendingNotifications = await _plugin
+        .pendingNotificationRequests();
 
     if (pendingNotifications.isEmpty) {
       print("No scheduled notifications.");
