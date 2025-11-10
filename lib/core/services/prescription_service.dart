@@ -52,4 +52,17 @@ class PrescriptionService {
       throw Exception('Failed to load doctor prescriptions: ${response.statusCode}');
     }
   }
+
+  Future<void> deletePrescription(int id) async {
+    final response = await http.delete(Uri.parse('$_baseUrl/$id'));
+
+    if (response.statusCode == 200) {
+      print('Prescription deleted successfully.');
+    } else if (response.statusCode == 404) {
+      throw Exception('Prescription not found');
+    } else {
+      throw Exception('Failed to delete prescription: ${response.statusCode}');
+    }
+  }
+
 }

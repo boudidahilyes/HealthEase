@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:healthease/core/dto/prescription_dto.dart';
 import 'package:healthease/core/services/prescription_service.dart';
 import 'package:healthease/dashboard/pages/prescription/prescription_detail.dart';
@@ -20,10 +21,17 @@ class _PrescriptionListPageState extends State<PrescriptionListPage> {
   String searchQuery = "";
   String filter = "All";
 
-  final TextEditingController _patientIdController = TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
 
   final List<Map<String, dynamic>> _medicines = [];
+
+  final List<Map<String, dynamic>> _users = [
+    {'id': 1, 'name': 'John Doe'},
+    {'id': 2, 'name': 'Jane Smith'},
+    {'id': 3, 'name': 'Alice Johnson'},
+  ];
+
+  int? _selectedPatientId;
 
   @override
   void initState() {
@@ -34,7 +42,6 @@ class _PrescriptionListPageState extends State<PrescriptionListPage> {
   @override
   void dispose() {
     _horizontalController.dispose();
-    _patientIdController.dispose();
     _descriptionController.dispose();
     super.dispose();
   }
@@ -42,7 +49,6 @@ class _PrescriptionListPageState extends State<PrescriptionListPage> {
   Future<void> _loadPrescriptions() async {
     final doctorId = 2;
     final prescriptions = await _prescriptionService.getPrescriptionsByDoctor(doctorId);
-    print(prescriptions);
     setState(() {
       _prescriptions = prescriptions;
     });
@@ -69,16 +75,25 @@ class _PrescriptionListPageState extends State<PrescriptionListPage> {
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Patient Information
                       _buildSectionHeader('Patient Information'),
-                      TextFormField(
-                        controller: _patientIdController,
+                      DropdownButtonFormField<int>(
+                        initialValue: _selectedPatientId,
                         decoration: const InputDecoration(
-                          labelText: 'Patient ID',
+                          labelText: 'Select Patient',
                           prefixIcon: Icon(Icons.person),
                           border: OutlineInputBorder(),
                         ),
-                        keyboardType: TextInputType.number,
+                        items: _users.map((user) {
+                          return DropdownMenuItem<int>(
+                            value: user['id'],
+                            child: Text('${user['name']}'),
+                          );
+                        }).toList(),
+                        onChanged: (value) {
+                          setState(() {
+                            _selectedPatientId = value;
+                          });
+                        },
                       ),
                       const SizedBox(height: 12),
                       TextFormField(
@@ -94,7 +109,6 @@ class _PrescriptionListPageState extends State<PrescriptionListPage> {
 
                       const SizedBox(height: 24),
 
-                      // Medicines Section
                       _buildSectionHeader('Medicines'),
                       if (_medicines.isEmpty)
                         Padding(
@@ -189,8 +203,8 @@ class _PrescriptionListPageState extends State<PrescriptionListPage> {
                                             border: OutlineInputBorder(),
                                           ),
                                           keyboardType: TextInputType.number,
-                                          onChanged: (value) =>
-                                          medicine['dosePerDay'] = int.tryParse(value) ?? 0,
+                                          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                                          onChanged: (value) => medicine['dosePerDay'] = int.tryParse(value) ?? 0,
                                         ),
                                       ),
                                       const SizedBox(width: 12),
@@ -202,6 +216,7 @@ class _PrescriptionListPageState extends State<PrescriptionListPage> {
                                             border: OutlineInputBorder(),
                                           ),
                                           keyboardType: TextInputType.number,
+                                          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                                           onChanged: (value) =>
                                           medicine['mgPerDose'] = int.tryParse(value) ?? 0,
                                         ),
@@ -302,26 +317,26 @@ class _PrescriptionListPageState extends State<PrescriptionListPage> {
   }
 
   void _clearForm() {
-    _patientIdController.clear();
-    _descriptionController.clear();
-    _medicines.clear();
+    setState(() {
+      _descriptionController.clear();
+      _medicines.clear();
+    });
+
   }
 
+
   Future<void> _submitPrescription(BuildContext context) async {
-    // Validate required fields
-    if (_patientIdController.text.isEmpty ||
+    if (_selectedPatientId==null ||
         _descriptionController.text.isEmpty) {
       _showErrorDialog('Validation Error', 'Please fill all required fields');
       return;
     }
 
-    // Validate at least one medicine
     if (_medicines.isEmpty) {
       _showErrorDialog('Validation Error', 'Please add at least one medicine');
       return;
     }
 
-    // Validate medicine fields
     for (var i = 0; i < _medicines.length; i++) {
       final medicine = _medicines[i];
       if (medicine['name'].isEmpty ||
@@ -335,7 +350,7 @@ class _PrescriptionListPageState extends State<PrescriptionListPage> {
     try {
       final prescription = PrescriptionDto(
         id:0,
-        patientId: int.parse(_patientIdController.text),
+        patientId: _selectedPatientId!,
         doctorId: 2,
         createdAt: DateTime.now(),
         description: _descriptionController.text,
@@ -356,10 +371,9 @@ class _PrescriptionListPageState extends State<PrescriptionListPage> {
 
       _showSuccessDialog('Success', 'Prescription created successfully!');
 
-      _clearForm();
-      Navigator.pop(context);
-
       _loadPrescriptions();
+
+
 
     } catch (e) {
       _showErrorDialog('Error', 'Failed to create prescription: $e');
@@ -380,7 +394,10 @@ class _PrescriptionListPageState extends State<PrescriptionListPage> {
         content: Text(message),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: () {
+              Navigator.pop(context);
+              Navigator.pop(context);
+            },
             child: const Text('OK'),
           ),
         ],
@@ -417,7 +434,15 @@ class _PrescriptionListPageState extends State<PrescriptionListPage> {
   @override
   Widget build(BuildContext context) {
     final filtered = _prescriptions.where((p) {
-      final matchSearch = p.patientId.toString().contains(searchQuery);
+      final patientName = _users
+          .firstWhere(
+            (user) => user['id'] == p.patientId,
+        orElse: () => {'name': 'Unknown'},
+      )['name']
+          .toString()
+          .toLowerCase();
+
+      final matchSearch = patientName.contains(searchQuery.toLowerCase());
 
       if (filter == "All") return matchSearch;
       if (filter == "0-2 meds") return matchSearch && p.medicines.length <= 2;
@@ -458,7 +483,7 @@ class _PrescriptionListPageState extends State<PrescriptionListPage> {
                     Expanded(
                       child: TextField(
                         decoration: const InputDecoration(
-                          hintText: "Search by patient ID...",
+                          hintText: "Search by patient name...",
                           prefixIcon: Icon(Icons.search),
                           border: OutlineInputBorder(),
                         ),
@@ -507,7 +532,7 @@ class _PrescriptionListPageState extends State<PrescriptionListPage> {
                           child: DataTable(
                             columnSpacing: 20,
                             columns: const [
-                              DataColumn(label: Text("Patient ID")),
+                              DataColumn(label: Text("Patient Name")),
                               DataColumn(label: Text("Created Date")),
                               DataColumn(label: Text("Medicines")),
                               DataColumn(label: Text("Actions")),
@@ -515,7 +540,12 @@ class _PrescriptionListPageState extends State<PrescriptionListPage> {
                             rows: filtered.map((p) {
                               return DataRow(
                                 cells: [
-                                  DataCell(Text(p.patientId.toString())),
+                                  DataCell(Text(
+                                    _users.firstWhere(
+                                          (user) => user['id'] == p.patientId,
+                                      orElse: () => {'name': 'Unknown'},
+                                    )['name'],
+                                  )),
                                   DataCell(Text(_formatDate(p.createdAt))),
                                   DataCell(Text(p.medicines.length.toString())),
                                   DataCell(
@@ -534,16 +564,11 @@ class _PrescriptionListPageState extends State<PrescriptionListPage> {
                                           },
                                         ),
                                         IconButton(
-                                          icon: const Icon(Icons.edit),
-                                          onPressed: () {
-                                            // TODO: Implement edit functionality
-                                          },
-                                        ),
-                                        IconButton(
                                           icon: const Icon(Icons.delete),
-                                          onPressed: () {
-                                            // TODO: Implement delete functionality
-                                          },
+                                          onPressed: () async {
+                                            await PrescriptionService().deletePrescription(p.id!);
+                                            _loadPrescriptions();
+                                            },
                                         ),
                                       ],
                                     ),

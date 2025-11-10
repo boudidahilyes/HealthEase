@@ -9,6 +9,11 @@ class PrescriptionDetailPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final List<Map<String, dynamic>> _users = [
+      {'id': 1, 'name': 'John Doe'},
+      {'id': 2, 'name': 'Jane Smith'},
+      {'id': 3, 'name': 'Alice Johnson'},
+    ];
     return Scaffold(
       backgroundColor: AppTheme.backgroundColor,
       body: Padding(
@@ -35,7 +40,6 @@ class PrescriptionDetailPage extends StatelessWidget {
             ),
             const SizedBox(height: 20),
 
-            // Prescription Info Card
             Card(
               elevation: 2,
               shape: RoundedRectangleBorder(
@@ -84,8 +88,11 @@ class PrescriptionDetailPage extends StatelessWidget {
                     ),
                     _buildInfoRow(
                       context,
-                      'Patient ID:',
-                      prescription.patientId.toString(),
+                      'Patient Name:',
+                        _users.firstWhere(
+                              (user) => user['id'] == prescription.patientId,
+                          orElse: () => {'name': 'Unknown'},
+                        )['name'],
                     ),
                     _buildInfoRow(
                       context,
