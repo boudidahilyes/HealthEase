@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:healthease/core/dao/appointments_dao.dart';
 import 'package:healthease/core/database/local_database.dart';
 import 'package:healthease/core/models/appointment.dart';
+import 'package:healthease/core/services/weather_service.dart';
+import 'package:healthease/mobile/pages/appointments/reschedule_appointment.dart';
 import 'package:healthease/theme.dart';
 import '../../widgets/common/custom_app_bar.dart';
 import '../../widgets/common/custom_bottom_nav.dart';
@@ -15,8 +17,8 @@ class AppointmentListPage extends StatefulWidget {
 }
 
 class _AppointmentListPageState extends State<AppointmentListPage> {
-  final List<Appointment> _appointments = [];
-  final List<Appointment> _pastAppointments = [];
+  final List<(Appointment app, String weather)> _appointments = [];
+  final List<(Appointment app, String weather)> _pastAppointments = [];
   late AppointmentDao _appointmentDao;
   bool _isLoading = true;
 
@@ -40,21 +42,27 @@ class _AppointmentListPageState extends State<AppointmentListPage> {
       _pastAppointments.clear();
 
       for (final appointment in allAppointments) {
-        final appointmentDay = DateTime(
-          appointment.appointmentDate.year,
-          appointment.appointmentDate.month,
-          appointment.appointmentDate.day,
-        );
+        final appointmentDay = appointment.appointmentDate;
+        String weatherSugg = '';
 
         if (appointmentDay.isAfter(today) || appointmentDay.isAtSameMomentAs(today)) {
-          _appointments.add(appointment);
+          try {
+            final weatherForecast = await WeatherService.getWeatherForecast(appointmentDay);
+            weatherSugg = WeatherService.getWeatherSuggestion(weatherForecast, appointment.speciality, appointmentDay);
+          } catch (e) {
+            weatherSugg = '🌤️ Weather info unavailable';
+          }
+        }
+
+        if (appointmentDay.isAfter(today) || appointmentDay.isAtSameMomentAs(today)) {
+          _appointments.add((appointment, weatherSugg));
         } else {
-          _pastAppointments.add(appointment);
+          _pastAppointments.add((appointment, weatherSugg));
         }
       }
 
-      _appointments.sort((a, b) => a.appointmentDate.compareTo(b.appointmentDate));
-      _pastAppointments.sort((a, b) => b.appointmentDate.compareTo(a.appointmentDate));
+      _appointments.sort((a, b) => a.$1.appointmentDate.compareTo(b.$1.appointmentDate));
+      _pastAppointments.sort((a, b) => b.$1.appointmentDate.compareTo(a.$1.appointmentDate));
     } catch (e) {
       _showErrorSnackBar('Failed to load appointments: $e');
     } finally {
@@ -71,17 +79,17 @@ class _AppointmentListPageState extends State<AppointmentListPage> {
 
   Future<void> _cancelAppointment(String appointmentId) async {
     try {
-      final appointment = _appointments.firstWhere((appt) => appt.id == appointmentId);
+      final appointment = _appointments.firstWhere((appt) => appt.$1.id == appointmentId);
 
       final updatedAppointment = Appointment(
-        id: appointment.id,
-        doctorId: appointment.doctorId,
-        patientId: appointment.patientId,
-        speciality: appointment.speciality,
-        appointmentDate: appointment.appointmentDate,
-        appointmentTime: appointment.appointmentTime,
+        id: appointment.$1.id,
+        doctorId: appointment.$1.doctorId,
+        patientId: appointment.$1.patientId,
+        speciality: appointment.$1.speciality,
+        appointmentDate: appointment.$1.appointmentDate,
+        appointmentTime: appointment.$1.appointmentTime,
         status: 'cancelled',
-        notes: appointment.notes,
+        notes: appointment.$1.notes,
       );
 
       await _appointmentDao.updateAppointment(updatedAppointment);
@@ -93,9 +101,6 @@ class _AppointmentListPageState extends State<AppointmentListPage> {
     }
   }
 
-  Future<void> _rescheduleAppointment(Appointment appointment) async {
-    _showInfoSnackBar('Reschedule functionality to be implemented');
-  }
 
   void _showErrorSnackBar(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
@@ -124,7 +129,23 @@ class _AppointmentListPageState extends State<AppointmentListPage> {
     );
   }
 
-  Widget _buildAppointmentCard(Appointment appointment, bool isUpcoming) {
+  void _navigateToReschedule(Appointment appointment) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => ReschedulePage(appointment: appointment),
+      ),
+    ).then((success) {
+      if (success == true) {
+        _loadAppointments();
+      }
+    });
+  }
+
+  Widget _buildAppointmentCard((Appointment app, String weather) appointmentData, bool isUpcoming) {
+    final appointment = appointmentData.$1;
+    final weatherSuggestion = appointmentData.$2;
+
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
       child: Padding(
@@ -169,6 +190,33 @@ class _AppointmentListPageState extends State<AppointmentListPage> {
               '${_formatDate(appointment.appointmentDate)} at ${appointment.appointmentTime}',
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppTheme.textColor.withOpacity(0.7)),
             ),
+
+            // WEATHER SUGGESTION - NEW FEATURE
+            if (isUpcoming && weatherSuggestion.isNotEmpty) ...[
+              const SizedBox(height: 8),
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: AppTheme.primaryColor.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.cloud, size: 16, color: AppTheme.primaryColor),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        weatherSuggestion,
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: AppTheme.textColor.withOpacity(0.8),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+
             if (appointment.notes != null && appointment.notes!.isNotEmpty) ...[
               const SizedBox(height: 8),
               Text(
@@ -188,7 +236,7 @@ class _AppointmentListPageState extends State<AppointmentListPage> {
                   ),
                   Expanded(
                     child: ElevatedButton(
-                      onPressed: () => _rescheduleAppointment(appointment),
+                      onPressed: () => _navigateToReschedule(appointment),
                       child: Text('Reschedule', style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.white)),
                     ),
                   ),
@@ -223,7 +271,7 @@ class _AppointmentListPageState extends State<AppointmentListPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: CustomAppBar(true),
+      appBar: CustomAppBar(false),
       bottomNavigationBar: CustomBottomNav(currentIndex: 1),
       floatingActionButton: FloatingActionButton(
         onPressed: _navigateToAddAppointment,

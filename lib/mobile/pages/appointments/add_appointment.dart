@@ -3,6 +3,7 @@ import 'package:healthease/core/dao/appointments_dao.dart';
 import 'package:healthease/core/database/local_database.dart';
 import 'package:healthease/core/models/appointment.dart';
 import 'package:healthease/theme.dart';
+import '../../../core/services/appointment_service.dart';
 import '../../widgets/common/custom_app_bar.dart';
 import '../../widgets/common/custom_bottom_nav.dart';
 
@@ -69,28 +70,61 @@ class _AppointmentAddPageState extends State<AppointmentAddPage> {
     if (picked != null) setState(() => _selectedTime = picked);
   }
 
+  // In your AppointmentAddPage, update _scheduleAppointment method:
   Future<void> _scheduleAppointment() async {
-    final AppointmentDao _appointmentDao = AppointmentDao(await LocalDatabase.instance);
+    final appointmentDao = AppointmentDao(await LocalDatabase.instance);
+    final appointmentService = AppointmentService(appointmentDao);
 
     if (!_formKey.currentState!.validate()) return;
 
-    setState(() => _isSubmitting = true);
+    final selectedDoctor = _doctors.firstWhere(
+          (doctor) => doctor['id'] == _selectedDoctor,
+    );
+
+    // Check for time slot availability for this specific doctor
+    final selectedTime = _selectedTime!.format(context);
+    final availability = await appointmentService.checkDoctorAppointmentAvailability(
+      selectedDoctor['id']!,
+      _selectedDate!,
+      selectedTime,
+    );
+
+    if (!availability.$1) {
+      if (!mounted) return;
+
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Time Slot Unavailable'),
+          content: Text(availability.$2!),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('OK'),
+            ),
+          ],
+        ),
+      );
+      return;
+    }
+
+    setState(() {
+      _isSubmitting = true;
+    });
 
     try {
-      final selectedDoctor = _doctors.firstWhere((doctor) => doctor['id'] == _selectedDoctor);
-
       final appointment = Appointment(
         id: '',
         doctorId: '2',
         patientId: '1',
         speciality: selectedDoctor['speciality']!,
         appointmentDate: _selectedDate!,
-        appointmentTime: _selectedTime!.format(context),
+        appointmentTime: selectedTime,
         status: 'pending',
         notes: _notesController.text.isNotEmpty ? _notesController.text : null,
       );
 
-      await _appointmentDao.insertAppointment(appointment);
+      await appointmentDao.insertAppointment(appointment);
 
       if (!mounted) return;
 
@@ -98,7 +132,9 @@ class _AppointmentAddPageState extends State<AppointmentAddPage> {
         SnackBar(
           content: Text(
             'Appointment scheduled successfully',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.white),
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: Colors.white,
+            ),
           ),
           backgroundColor: AppTheme.successColor,
           behavior: SnackBarBehavior.floating,
@@ -113,14 +149,20 @@ class _AppointmentAddPageState extends State<AppointmentAddPage> {
         SnackBar(
           content: Text(
             'Failed to schedule appointment: $e',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.white),
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: Colors.white,
+            ),
           ),
           backgroundColor: AppTheme.errorColor,
           behavior: SnackBarBehavior.floating,
         ),
       );
     } finally {
-      if (mounted) setState(() => _isSubmitting = false);
+      if (mounted) {
+        setState(() {
+          _isSubmitting = false;
+        });
+      }
     }
   }
 
@@ -143,7 +185,7 @@ class _AppointmentAddPageState extends State<AppointmentAddPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: CustomAppBar(false),
+      appBar: CustomAppBar(true),
       bottomNavigationBar: CustomBottomNav(currentIndex: 4),
       body: SafeArea(
         child: Column(
